@@ -1,34 +1,98 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.hashers import make_password, check_password
+from django.core.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils import timezone
 import json
 from .models import User
+import uuid
+import traceback
 
 @csrf_exempt
 def register_view(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
-        email = data.get('email')
-        password = data.get('password')
-        gender = data.get('gender')
-        birthday = data.get('birthday')  # Get the birthday from the request
+        try:
+            data = json.loads(request.body)
+            first_name = data.get('firstName')
+            last_name = data.get('lastName')
+            email = data.get('email')
+            password = data.get('password')
+            gender = data.get('gender')
+            birthday = data.get('birthday')  # Get the birthday from the request
+            phone_number = data.get('phoneNumber')  # Get the phone number
+            photo_path = data.get('photoPath')  # Get the photo path
 
-        if User.objects.filter(email=email).exists():
-            return JsonResponse({'error': 'Email already exists'}, status=400)
+            # Validate required fields
+            if not all([first_name, last_name, email, password, gender, birthday]):
+                return JsonResponse({'error': 'All required fields must be provided'}, status=400)
 
-        # Create the user instance with the birthday included
-        user = User(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            gender=gender,
-            password=make_password(password),
-            birthday=birthday  # Save the birthday in the user instance
-        )
-        user.save()
-        return JsonResponse({'message': 'User registered successfully'}, status=201)
+            # Check if email already exists
+            if User.objects.filter(email=email).exists():
+                return JsonResponse({'error': 'Email already exists'}, status=400)
+
+            # Generate a unique username from email
+            username = email.split('@')[0]
+            # If username already exists, append a random string
+            if User.objects.filter(username=username).exists():
+                username = f"{username}_{uuid.uuid4().hex[:8]}"
+
+            # Ensure gender is a single character
+            if gender and len(gender) > 1:
+                gender = gender[0].upper()  # Take only the first character and make it uppercase
+            
+            # Validate gender
+            if gender not in ['M', 'F']:
+                return JsonResponse({'error': "Gender must be either 'M' or 'F'"}, status=400)
+
+            # Create the user instance with all fields
+            user = User(
+                username=username,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                gender=gender,
+                birthday=birthday,  # Save the birthday in the user instance
+                phone_number=phone_number,  # Save the phone number
+                photo_path=photo_path,  # Save the photo path
+                is_active=True,
+                is_staff=False,
+                is_superuser=False
+            )
+            user.set_password(password)
+            user.save()
+            
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            
+            # Return user data and tokens
+            user_data = {
+                'id': user.id,
+                'username': user.username or f"{user.first_name} {user.last_name}",
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'gender': user.gender,
+                'phone_number': user.phone_number,
+                'photo_path': user.photo_path
+            }
+            
+            return JsonResponse({
+                'message': 'User registered successfully',
+                'user': user_data,
+                'tokens': {
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh)
+                }
+            }, status=201)
+            
+        except ValidationError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except Exception as e:
+            # Log the full traceback for debugging
+            print(f"Registration error: {str(e)}")
+            print(traceback.format_exc())
+            return JsonResponse({'error': f'Registration failed: {str(e)}'}, status=500)
 
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -42,10 +106,58 @@ def login_view(request):
         try:
             user = User.objects.get(email=email)
             if check_password(password, user.password):
-                return JsonResponse({'message': 'Login successful', 'user_id': user.id}, status=200)
+                # Update last login
+                user.last_login = timezone.now()
+                user.save(update_fields=['last_login'])
+                
+                # Generate JWT tokens
+                refresh = RefreshToken.for_user(user)
+                
+                # Return user data and tokens
+                user_data = {
+                    'id': user.id,
+                    'username': user.username or f"{user.first_name} {user.last_name}",
+                    'email': user.email,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'gender': user.gender,
+                    'phone_number': user.phone_number,
+                    'photo_path': user.photo_path
+                }
+                
+                return JsonResponse({
+                    'message': 'success',
+                    'user': user_data,
+                    'tokens': {
+                        'access': str(refresh.access_token),
+                        'refresh': str(refresh)
+                    }
+                }, status=200)
             else:
                 return JsonResponse({'error': 'Invalid credentials'}, status=400)
         except User.DoesNotExist:
             return JsonResponse({'error': 'User not found'}, status=400)
 
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+def token_refresh_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            refresh_token = data.get('refresh')
+            
+            if not refresh_token:
+                return JsonResponse({'error': 'Refresh token is required'}, status=400)
+                
+            # Create a new access token from the refresh token
+            refresh = RefreshToken(refresh_token)
+            
+            return JsonResponse({
+                'access': str(refresh.access_token)
+            }, status=200)
+            
+        except Exception as e:
+            return JsonResponse({'error': f'Token refresh failed: {str(e)}'}, status=400)
+            
     return JsonResponse({'error': 'Invalid request'}, status=400)
