@@ -13,7 +13,7 @@
 
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-hover transition-colors duration-200;
+    @apply px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors duration-200;
   }
 
   .btn-secondary {
@@ -34,7 +34,7 @@
   }
 
   .card-header {
-    @apply px-4 py-5 sm:px-6 bg-gradient-primary text-white;
+    @apply px-4 py-5 sm:px-6 bg-primary text-white;
   }
 
   .card-body {
@@ -65,7 +65,7 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-primary-hover;
+  @apply bg-primary-dark;
 }
 
 :root {
@@ -310,4 +310,4 @@ input {
 
 .login-container a:hover {
   text-decoration: underline;
-}
+} 

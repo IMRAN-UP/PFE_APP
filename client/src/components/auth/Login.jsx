@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { setAuthTokens, setUserData } from '../../utils/auth';
+import { useTheme } from '../../context/ThemeContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -57,19 +59,19 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-primary py-12 px-4 sm:px-6 lg:px-8">
-      <div className="card max-w-md w-full space-y-8 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-primary dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="card max-w-md w-full space-y-8 p-8 dark:bg-gray-800">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             Welcome Back
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             Sign in to your account
           </p>
         </div>
         
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4" role="alert">
+          <div className="bg-red-50 dark:bg-red-900/50 border-l-4 border-red-400 p-4" role="alert">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -77,14 +79,14 @@ const Login = () => {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-red-700">{error}</p>
+                <p className="text-sm text-red-700 dark:text-red-200">{error}</p>
               </div>
             </div>
           </div>
         )}
         
         {success && (
-          <div className="bg-green-50 border-l-4 border-green-400 p-4" role="alert">
+          <div className="bg-green-50 dark:bg-green-900/50 border-l-4 border-green-400 p-4" role="alert">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -92,7 +94,7 @@ const Login = () => {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-green-700">{success}</p>
+                <p className="text-sm text-green-700 dark:text-green-200">{success}</p>
               </div>
             </div>
           </div>
@@ -101,13 +103,13 @@ const Login = () => {
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
-              <label htmlFor="email" className="form-label">Email address</label>
+              <label htmlFor="email" className="form-label dark:text-gray-300">Email address</label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
-                className="input-field"
+                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 placeholder="Enter your email"
                 value={formData.email}
                 onChange={handleChange}
@@ -115,13 +117,13 @@ const Login = () => {
               />
             </div>
             <div>
-              <label htmlFor="password" className="form-label">Password</label>
+              <label htmlFor="password" className="form-label dark:text-gray-300">Password</label>
               <input
                 id="password"
                 name="password"
                 type="password"
                 required
-                className="input-field"
+                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
@@ -152,9 +154,9 @@ const Login = () => {
         </form>
 
         <div className="text-center">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             Don&apos;t have an account?{' '}
-            <Link to="/register" className="font-medium text-primary hover:text-primary-hover transition-colors duration-200">
+            <Link to="/register" className="font-medium text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary transition-colors duration-200">
               Register here
             </Link>
           </p>

@@ -7,6 +7,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { isAuthenticated } from './utils/auth';
+import { ThemeProvider } from './context/ThemeContext';
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -25,26 +26,28 @@ const App = () => {
   }
 
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/auth" element={
-            isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Login />
-          } />
-          <Route path="/register" element={
-            isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Register />
-          } />
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
-    </Router>
+    <ThemeProvider>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/auth" element={
+              isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Login />
+            } />
+            <Route path="/register" element={
+              isAuthenticated() ? <Navigate to="/dashboard" replace /> : <Register />
+            } />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
+      </Router>
+    </ThemeProvider>
   );
 };
 

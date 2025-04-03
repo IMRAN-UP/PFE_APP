@@ -13,16 +13,18 @@ import traceback
 def register_view(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            first_name = data.get('firstName')
-            last_name = data.get('lastName')
-            email = data.get('email')
-            password = data.get('password')
-            gender = data.get('gender')
-            birthday = data.get('birthday')  # Get the birthday from the request
-            phone_number = data.get('phoneNumber')  # Get the phone number
-            photo_path = data.get('photoPath')  # Get the photo path
-
+            # Handle FormData instead of JSON
+            first_name = request.POST.get('first_name')
+            last_name = request.POST.get('last_name')
+            email = request.POST.get('email')
+            password = request.POST.get('password')
+            gender = request.POST.get('gender')
+            birthday = request.POST.get('birthday')
+            phone_number = request.POST.get('phone_number')
+            
+            # Handle file upload
+            profile_image = request.FILES.get('profile_image')
+            
             # Validate required fields
             if not all([first_name, last_name, email, password, gender, birthday]):
                 return JsonResponse({'error': 'All required fields must be provided'}, status=400)
@@ -52,13 +54,36 @@ def register_view(request):
                 last_name=last_name,
                 email=email,
                 gender=gender,
-                birthday=birthday,  # Save the birthday in the user instance
-                phone_number=phone_number,  # Save the phone number
-                photo_path=photo_path,  # Save the photo path
+                birthday=birthday,
+                phone_number=phone_number,
                 is_active=True,
                 is_staff=False,
                 is_superuser=False
             )
+            
+            # Handle profile image if provided
+            if profile_image:
+                # Save the file to a specific directory
+                import os
+                from django.conf import settings
+                
+                # Create media directory if it doesn't exist
+                media_root = os.path.join(settings.BASE_DIR, 'media', 'profile_images')
+                os.makedirs(media_root, exist_ok=True)
+                
+                # Generate a unique filename
+                file_extension = os.path.splitext(profile_image.name)[1]
+                filename = f"{username}_{uuid.uuid4().hex[:8]}{file_extension}"
+                file_path = os.path.join('profile_images', filename)
+                
+                # Save the file
+                with open(os.path.join(media_root, filename), 'wb+') as destination:
+                    for chunk in profile_image.chunks():
+                        destination.write(chunk)
+                
+                # Save the path to the database
+                user.photo_path = file_path
+            
             user.set_password(password)
             user.save()
             

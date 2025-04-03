@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { setAuthTokens, setUserData } from '../../utils/auth';
+import { useTheme } from '../../context/ThemeContext';
 
 const Register = () => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -85,72 +87,42 @@ const Register = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setErrors(prev => ({
-          ...prev,
-          profile_image: 'Please upload an image file'
-        }));
-        return;
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        setErrors(prev => ({
-          ...prev,
-          profile_image: 'Image size should be less than 5MB'
-        }));
-        return;
-      }
-
+    const { name, value, type, files } = e.target;
+    
+    if (type === 'file') {
+      const file = files[0];
       setFormData(prev => ({
         ...prev,
-        profile_image: file
+        [name]: file
       }));
       
-      // Create preview URL
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-      
-      // Clear any previous image errors
-      if (errors.profile_image) {
-        setErrors(prev => ({
-          ...prev,
-          profile_image: ''
-        }));
+      // Create preview URL for image
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
       }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    
+    if (!validateForm()) {
+      return;
+    }
 
     setIsLoading(true);
     setSuccess('');
 
     try {
-      // Create FormData object to handle file upload
       const formDataToSend = new FormData();
       Object.keys(formData).forEach(key => {
         if (formData[key] !== null) {
@@ -160,10 +132,10 @@ const Register = () => {
 
       const response = await axios.post('/users/register/', formDataToSend, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'multipart/form-data',
+        },
       });
-      
+
       if (response.data && response.data.tokens) {
         setAuthTokens(response.data.tokens);
         setUserData(response.data.user);
@@ -175,27 +147,30 @@ const Register = () => {
       }
     } catch (error) {
       console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.error || 'An error occurred during registration. Please try again.';
-      setErrors({ submit: errorMessage });
+      if (error.response?.data?.errors) {
+        setErrors(error.response.data.errors);
+      } else {
+        setErrors({ submit: 'An error occurred during registration. Please try again.' });
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-primary py-12 px-4 sm:px-6 lg:px-8">
-      <div className="card max-w-md w-full space-y-8 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-primary dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="card max-w-md w-full space-y-8 p-8 dark:bg-gray-800">
         <div>
-          <h2 className="text-center text-3xl font-extrabold text-gray-900">
-            Create Account
+          <h2 className="text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+            Create your account
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
             Join Smart Wardrobe today
           </p>
         </div>
-        
-        {errors.submit && (
-          <div className="bg-red-50 border-l-4 border-red-400 p-4" role="alert">
+
+        {Object.keys(errors).length > 0 && (
+          <div className="bg-red-50 dark:bg-red-900/50 border-l-4 border-red-400 p-4" role="alert">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -203,14 +178,18 @@ const Register = () => {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-red-700">{errors.submit}</p>
+                <ul className="list-disc list-inside text-sm text-red-700 dark:text-red-200">
+                  {Object.entries(errors).map(([key, value]) => (
+                    <li key={key}>{value}</li>
+                  ))}
+                </ul>
               </div>
             </div>
           </div>
         )}
-        
+
         {success && (
-          <div className="bg-green-50 border-l-4 border-green-400 p-4" role="alert">
+          <div className="bg-green-50 dark:bg-green-900/50 border-l-4 border-green-400 p-4" role="alert">
             <div className="flex">
               <div className="flex-shrink-0">
                 <svg className="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -218,201 +197,159 @@ const Register = () => {
                 </svg>
               </div>
               <div className="ml-3">
-                <p className="text-sm text-green-700">{success}</p>
+                <p className="text-sm text-green-700 dark:text-green-200">{success}</p>
               </div>
             </div>
           </div>
         )}
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            {/* Profile Image Upload */}
-            <div className="flex flex-col items-center">
-              <div className="mb-4">
+            <div className="flex flex-col items-center mb-6">
+              <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-gray-300 dark:border-gray-600 mb-4">
                 {imagePreview ? (
-                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-2 border-gray-300">
-                    <img 
-                      src={imagePreview} 
-                      alt="Profile preview" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                  <img 
+                    src={imagePreview} 
+                    alt="Profile preview" 
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <div className="w-32 h-32 rounded-full bg-gray-200 flex items-center justify-center border-2 border-gray-300">
-                    <svg className="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <div className="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <svg className="h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                   </div>
                 )}
               </div>
-              <div className="flex items-center justify-center">
-                <label className="btn-primary cursor-pointer flex items-center">
-                  <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                  </svg>
-                  Upload Photo
-                  <input 
-                    type="file" 
-                    className="hidden" 
-                    accept="image/*" 
-                    onChange={handleImageChange}
-                    disabled={isLoading}
-                  />
-                </label>
-              </div>
-              {errors.profile_image && (
-                <p className="mt-1 text-sm text-red-600">{errors.profile_image}</p>
-              )}
+              <label className="btn-primary cursor-pointer flex items-center">
+                <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Upload Photo
+                <input 
+                  type="file" 
+                  name="profile_image"
+                  className="hidden" 
+                  accept="image/*" 
+                  onChange={handleChange}
+                  disabled={isLoading}
+                />
+              </label>
             </div>
 
-            {/* First row: First Name and Last Name */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="first_name" className="form-label">First Name</label>
+                <label htmlFor="first_name" className="form-label dark:text-gray-300">First Name</label>
                 <input
                   id="first_name"
                   name="first_name"
                   type="text"
                   required
-                  className="input-field"
-                  placeholder="Enter your first name"
+                  className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   value={formData.first_name}
                   onChange={handleChange}
                   disabled={isLoading}
                 />
-                {errors.first_name && <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>}
               </div>
               <div>
-                <label htmlFor="last_name" className="form-label">Last Name</label>
+                <label htmlFor="last_name" className="form-label dark:text-gray-300">Last Name</label>
                 <input
                   id="last_name"
                   name="last_name"
                   type="text"
                   required
-                  className="input-field"
-                  placeholder="Enter your last name"
+                  className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                   value={formData.last_name}
                   onChange={handleChange}
                   disabled={isLoading}
                 />
-                {errors.last_name && <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>}
               </div>
             </div>
-            
-            {/* Second row: Email */}
+
             <div>
-              <label htmlFor="email" className="form-label">Email address</label>
+              <label htmlFor="email" className="form-label dark:text-gray-300">Email address</label>
               <input
                 id="email"
                 name="email"
                 type="email"
                 required
-                className="input-field"
-                placeholder="Enter your email"
+                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 value={formData.email}
                 onChange={handleChange}
                 disabled={isLoading}
               />
-              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
             </div>
-            
-            {/* Third row: Gender */}
+
             <div>
-              <label className="form-label">Gender</label>
-              <div className="flex space-x-4 mt-1">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="M"
-                    checked={formData.gender === 'M'}
-                    onChange={handleChange}
-                    className="form-radio h-4 w-4 text-primary"
-                    disabled={isLoading}
-                  />
-                  <span className="ml-2">Men</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="gender"
-                    value="F"
-                    checked={formData.gender === 'F'}
-                    onChange={handleChange}
-                    className="form-radio h-4 w-4 text-primary"
-                    disabled={isLoading}
-                  />
-                  <span className="ml-2">Women</span>
-                </label>
-              </div>
-              {errors.gender && <p className="mt-1 text-sm text-red-600">{errors.gender}</p>}
+              <label htmlFor="password" className="form-label dark:text-gray-300">Password</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                required
+                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                value={formData.password}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
             </div>
-            
-            {/* Fourth row: Birthday and Phone Number */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="birthday" className="form-label">Birthday</label>
-                <input
-                  id="birthday"
-                  name="birthday"
-                  type="date"
-                  required
-                  className="input-field"
-                  value={formData.birthday}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-                {errors.birthday && <p className="mt-1 text-sm text-red-600">{errors.birthday}</p>}
-              </div>
-              <div>
-                <label htmlFor="phone_number" className="form-label">Phone Number</label>
-                <input
-                  id="phone_number"
-                  name="phone_number"
-                  type="tel"
-                  required
-                  className="input-field"
-                  placeholder="+1 (555) 555-5555"
-                  value={formData.phone_number}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-                {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
-              </div>
+
+            <div>
+              <label htmlFor="confirm_password" className="form-label dark:text-gray-300">Confirm Password</label>
+              <input
+                id="confirm_password"
+                name="confirm_password"
+                type="password"
+                required
+                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                value={formData.confirm_password}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
             </div>
-            
-            {/* Fifth row: Password and Confirm Password */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="password" className="form-label">Password</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="input-field"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-              </div>
-              <div>
-                <label htmlFor="confirm_password" className="form-label">Confirm Password</label>
-                <input
-                  id="confirm_password"
-                  name="confirm_password"
-                  type="password"
-                  required
-                  className="input-field"
-                  placeholder="Confirm your password"
-                  value={formData.confirm_password}
-                  onChange={handleChange}
-                  disabled={isLoading}
-                />
-                {errors.confirm_password && <p className="mt-1 text-sm text-red-600">{errors.confirm_password}</p>}
-              </div>
+
+            <div>
+              <label htmlFor="gender" className="form-label dark:text-gray-300">Gender</label>
+              <select
+                id="gender"
+                name="gender"
+                required
+                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                value={formData.gender}
+                onChange={handleChange}
+                disabled={isLoading}
+              >
+                <option value="">Select gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="birthday" className="form-label dark:text-gray-300">Birthday</label>
+              <input
+                id="birthday"
+                name="birthday"
+                type="date"
+                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                value={formData.birthday}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="phone_number" className="form-label dark:text-gray-300">Phone Number</label>
+              <input
+                id="phone_number"
+                name="phone_number"
+                type="tel"
+                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
+                value={formData.phone_number}
+                onChange={handleChange}
+                disabled={isLoading}
+              />
             </div>
           </div>
 
@@ -437,9 +374,9 @@ const Register = () => {
           </div>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-primary hover:text-primary-hover transition-colors duration-200">
+              <Link to="/login" className="font-medium text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary transition-colors duration-200">
                 Sign in here
               </Link>
             </p>
