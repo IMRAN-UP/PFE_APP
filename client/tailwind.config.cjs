@@ -8,15 +8,15 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#764ba2',
-          hover: '#5F41E4',
+          DEFAULT: '#8F26EC',
+          hover: '#7B1FD1',
         },
       },
       fontFamily: {
         sans: ['Montserrat', 'sans-serif'],
       },
       backgroundImage: {
-        'gradient-primary': 'linear-gradient(135deg, #764ba2 0%, #5F41E4 100%)',
+        'gradient-primary': 'linear-gradient(135deg, #8F26EC 0%, #7B1FD1 100%)',
       },
     },
   },

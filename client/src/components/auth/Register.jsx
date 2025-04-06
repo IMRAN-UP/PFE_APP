@@ -22,6 +22,12 @@ const Register = () => {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
+  const [passwordValidation, setPasswordValidation] = useState({
+    hasCapital: false,
+    hasNumber: false,
+    hasSymbol: false,
+    hasMinLength: false
+  });
 
   useEffect(() => {
     setErrors({});
@@ -86,6 +92,15 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const validatePassword = (password) => {
+    setPasswordValidation({
+      hasCapital: /[A-Z]/.test(password),
+      hasNumber: /[0-9]/.test(password),
+      hasSymbol: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+      hasMinLength: password.length >= 8
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value, type, files } = e.target;
     
@@ -109,6 +124,10 @@ const Register = () => {
         ...prev,
         [name]: value
       }));
+
+      if (name === 'password') {
+        validatePassword(value);
+      }
     }
   };
 
@@ -292,6 +311,48 @@ const Register = () => {
                 onChange={handleChange}
                 disabled={isLoading}
               />
+              <div className="mt-2 flex items-center justify-center space-x-4 text-sm">
+                <div className="flex items-center" title="Capital Letter">
+                  <svg className={`w-5 h-5 ${passwordValidation.hasCapital ? 'text-green-500' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {passwordValidation.hasCapital ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    )}
+                  </svg>
+                  <span className="ml-1 font-bold">A</span>
+                </div>
+                <div className="flex items-center" title="Number">
+                  <svg className={`w-5 h-5 ${passwordValidation.hasNumber ? 'text-green-500' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {passwordValidation.hasNumber ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    )}
+                  </svg>
+                  <span className="ml-1 font-bold">1</span>
+                </div>
+                <div className="flex items-center" title="Symbol">
+                  <svg className={`w-5 h-5 ${passwordValidation.hasSymbol ? 'text-green-500' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {passwordValidation.hasSymbol ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    )}
+                  </svg>
+                  <span className="ml-1 font-bold">@</span>
+                </div>
+                <div className="flex items-center" title="8+ Characters">
+                  <svg className={`w-5 h-5 ${passwordValidation.hasMinLength ? 'text-green-500' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {passwordValidation.hasMinLength ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    )}
+                  </svg>
+                  <span className="ml-1 font-bold">8+</span>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -310,20 +371,30 @@ const Register = () => {
 
             <div>
               <label htmlFor="gender" className="form-label dark:text-gray-300">Gender</label>
-              <select
-                id="gender"
-                name="gender"
-                required
-                className="input-field dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                value={formData.gender}
-                onChange={handleChange}
-                disabled={isLoading}
-              >
-                <option value="">Select gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => handleChange({ target: { name: 'gender', value: 'male' } })}
+                  className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all duration-200 ${
+                    formData.gender === 'male'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-primary hover:bg-primary/5'
+                  }`}
+                >
+                  Male
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChange({ target: { name: 'gender', value: 'female' } })}
+                  className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all duration-200 ${
+                    formData.gender === 'female'
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-gray-300 dark:border-gray-600 hover:border-primary hover:bg-primary/5'
+                  }`}
+                >
+                  Female
+                </button>
+              </div>
             </div>
 
             <div>

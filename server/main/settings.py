@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'users',
+    'wardrobe',
+    'clothing_processor',
 ]
 
 # Tell Django to use our custom User model

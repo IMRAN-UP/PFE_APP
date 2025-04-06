@@ -23,6 +23,8 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.urls')),
+    path('wardrobe/', include('wardrobe.urls')),
+    path('clothing-processor/', include('clothing_processor.urls')),
 ]
 
 # Serve media files in development

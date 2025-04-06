@@ -5,6 +5,7 @@ import Register from './components/auth/Register';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import About from './pages/About';
+import Wardrobe from './components/wardrobe/Wardrobe';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { isAuthenticated } from './utils/auth';
 import { ThemeProvider } from './context/ThemeContext';
@@ -41,6 +42,11 @@ const App = () => {
             <Route path="/dashboard" element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/wardrobe" element={
+              <ProtectedRoute>
+                <Wardrobe />
               </ProtectedRoute>
             } />
             <Route path="*" element={<Navigate to="/" replace />} />

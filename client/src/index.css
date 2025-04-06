@@ -17,7 +17,7 @@
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-white text-primary border border-primary rounded-md hover:bg-gray-50 transition-colors duration-200;
+    @apply px-4 py-2 bg-gray-800 text-white border border-gray-700 rounded-md hover:bg-gray-700 transition-colors duration-200 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600;
   }
 
   .input-field {
@@ -69,9 +69,9 @@
 }
 
 :root {
-  --primary-color: #764ba2;
-  --primary-hover: #5F41E4;
-  --background-gradient: linear-gradient(135deg, #764ba2 0%, #5F41E4 100%);
+  --primary-color: #8F26EC;
+  --primary-hover: #7B1FD1;
+  --background-gradient: linear-gradient(135deg, #8F26EC 0%, #7B1FD1 100%);
   --text-color: #333;
   --error-color: #e74c3c;
   --success-color: #4CAF50;
